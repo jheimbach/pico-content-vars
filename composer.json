@@ -1,0 +1,30 @@
+{
+  "name": "jheimbach/pico-content-vars",
+  "type": "pico-plugin",
+  "description": "A Content variables plugin for Pico CMS.",
+  "keywords": [ "pico", "picocms", "picocms-plugin", "pico-content-vars"],
+  "homepage": "http://picocms.org/",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Johannes Heimbach",
+      "homepage": "https://github.com/jheimbach/pico-content-vars",
+      "role": "Lead Developer"
+    },
+    {
+      "name": "Contributors",
+      "homepage": "https://github.com/jheimbach/pico-content-vars/graphs/contributors"
+    }
+  ],
+  "support": {
+    "docs": "https://github.com/jheimbach/pico-content-vars/blob/master/README.md",
+    "issues": "https://github.com/jheimbach/pico-content-vars/issues",
+    "source": "https://github.com/jheimbach/pico-content-vars"
+  },
+  "require": {
+    "php": ">=5.4.0"
+  },
+  "autoload": {
+    "classmap": [ "PicoContentVars.php" ]
+  }
+}

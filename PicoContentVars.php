@@ -10,22 +10,29 @@ class PicoContentVars extends AbstractPicoPlugin
     const API_VERSION = 2;
     private $variables = [];
 
+    private $defaultConfig = [
+        'content_vars' => [
+            'config' => [
+                'folder' => 'vars/',
+                'file' => 'vars.yml'
+            ]
+        ]
+    ];
+
 
     public function onConfigLoaded($config)
     {
-        $yamlParser = $this->getPico()->getYamlParser();
+        $config += $this->defaultConfig;
 
-        $loadConfigClosure = function ($configFile) use ($yamlParser) {
-            $yaml = file_get_contents($configFile);
-            $config = $yamlParser->parse($yaml);
-            return is_array($config) ? $config : array();
-        };
+        $loadConfigClosure = $this->loadConfigClosure();
 
-        if ($this->getPico()->getConfig('env', null) != null) {
-            $this->variables['env'] = $this->getPico()->getConfig('env');
+        $env = $this->getPico()->getConfig('env', null);
+
+        if ($env != null) {
+            $this->variables['env'] = $env;
         }
 
-        $configFile = $this->getConfigFile($config);
+        $configFile = $this->getConfigFile($config, $env);
 
         if (file_exists($configFile)) {
             $this->variables += $loadConfigClosure($configFile);
@@ -37,34 +44,48 @@ class PicoContentVars extends AbstractPicoPlugin
      */
     public function onContentPrepared(&$markdown)
     {
-        $variables = [];
         foreach ($this->variables as $key => $variable) {
-            $variables['%' . $key . '%'] = $variable;
+            $markdown = str_replace('%' . $key . '%', $variable, $markdown);
         }
-
-        $markdown = str_replace('%env%', $variables['%env%'], $markdown);
-        $markdown = str_replace(array_keys($variables), array_values($variables), $markdown);
     }
 
-    public function onPageRendering($twigTemplate, $twigVariables)
+    public function onPageRendering(&$twigTemplate, &$twigVariables)
     {
         $twigVariables = array_merge($twigVariables, $this->variables);
     }
 
     /**
+     * @param array $config
+     * @param null|string $env
      * @return string
      */
-    protected function getConfigFile($config)
+    protected function getConfigFile($config, $env = null)
     {
-        $file = 'vars.yml';
+        $folder = $config['content_vars']['config']['folder'];
+        $filename = $folder . $config['content_vars']['config']['file'];
 
-        if (array_key_exists('contentvars', $config) &&
-            is_array($config['contentvars']) &&
-            array_key_exists('file', $config['contentvars'])) {
-            $file = $config['contentvars']['file'];
+        if ($env != null) {
+            //set environment vars file if exists
+            $envFilename = $folder . 'vars.' . $env . '.yml';
+            $filename = file_exists($this->getPico()->getConfigDir() . $envFilename) ? $envFilename : $filename;
         }
 
-        return $this->getPico()->getConfigDir() . $file;
+        return $this->getPico()->getConfigDir() . $filename;
     }
 
+    /**
+     * @return Closure
+     */
+    protected function loadConfigClosure()
+    {
+        $yamlParser = $this->getPico()->getYamlParser();
+
+        $loadConfigClosure = function ($configFile) use ($yamlParser) {
+            $yaml = file_get_contents($configFile);
+            $config = $yamlParser->parse($yaml);
+            return is_array($config) ? $config : array();
+        };
+
+        return $loadConfigClosure;
+    }
 }
